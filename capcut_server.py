@@ -1,5 +1,6 @@
 import requests
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_file
+import os
 from datetime import datetime
 import pyJianYingDraft as draft
 from pyJianYingDraft.metadata.animation_meta import Intro_type, Outro_type, Group_animation_type
@@ -34,6 +35,52 @@ from util import generate_draft_url as utilgenerate_draft_url
 from settings.local import IS_CAPCUT_ENV, DRAFT_DOMAIN, PREVIEW_ROUTER
 
 app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def index():
+    """API首页 - 显示可用的API端点"""
+    api_info = {
+        "service": "CapCutAPI",
+        "status": "running",
+        "version": "1.0.0",
+        "base_url": "http://8.148.70.18:9000",
+        "endpoints": {
+            "GET /test": "🌐 简单测试界面",
+            "GET /comprehensive-test": "🔧 完整测试用例",
+            "POST /create_draft": "创建草稿",
+            "POST /add_video": "添加视频",
+            "POST /add_audio": "添加音频", 
+            "POST /add_text": "添加文本",
+            "POST /add_image": "添加图片",
+            "POST /add_subtitle": "添加字幕",
+            "POST /add_sticker": "添加贴纸",
+            "POST /add_effect": "添加特效",
+            "POST /save_draft": "保存草稿",
+            "GET /get_font_types": "获取字体列表",
+            "GET /get_transition_types": "获取转场类型",
+            "GET /get_mask_types": "获取蒙版类型"
+        },
+        "usage": {
+            "example": "curl -X POST http://8.148.70.18:9000/create_draft -H 'Content-Type: application/json' -d '{\"draft_name\":\"test\"}'"
+        }
+    }
+    return jsonify(api_info)
+
+@app.route('/test', methods=['GET'])
+def test_page():
+    """提供API测试页面"""
+    try:
+        return send_file('api_test.html')
+    except Exception as e:
+        return jsonify({"error": f"无法加载测试页面: {str(e)}"}), 500
+
+@app.route('/comprehensive-test', methods=['GET'])
+def comprehensive_test_page():
+    """提供完整的API测试用例页面"""
+    try:
+        return send_file('comprehensive_test.html')
+    except Exception as e:
+        return jsonify({"error": f"无法加载完整测试页面: {str(e)}"}), 500
  
 @app.route('/add_video', methods=['POST'])
 def add_video():
@@ -742,7 +789,14 @@ def generate_draft_url():
         return jsonify(result)
     
     try:
-        draft_result = { "draft_url" : f"{DRAFT_DOMAIN}{PREVIEW_ROUTER}?={draft_id}"}
+        # 根据配置决定使用OSS还是服务器直接下载
+        if IS_UPLOAD_DRAFT:
+            # 使用OSS模式
+            draft_result = { "draft_url" : f"{DRAFT_DOMAIN}{PREVIEW_ROUTER}?draft_id={draft_id}"}
+        else:
+            # 使用服务器直接下载模式
+            server_ip = "8.148.70.18"
+            draft_result = { "draft_url" : f"http://{server_ip}:9000{PREVIEW_ROUTER}?draft_id={draft_id}"}
         
         result["success"] = True
         result["output"] = draft_result
@@ -752,6 +806,38 @@ def generate_draft_url():
         error_message = f"Error occurred while saving draft: {str(e)}."
         result["error"] = error_message
         return jsonify(result)
+
+@app.route('/draft/downloader', methods=['GET'])
+def download_draft():
+    """Download draft file directly from server"""
+    from flask import send_file
+    import os
+    import zipfile
+    import tempfile
+    
+    # Get draft_id from query parameters
+    draft_id = request.args.get('draft_id')
+    
+    if not draft_id:
+        return jsonify({"error": "Missing draft_id parameter"}), 400
+    
+    try:
+        # Check if draft folder exists
+        draft_folder = f"./tmp/zip/{draft_id}.zip"
+        
+        if not os.path.exists(draft_folder):
+            return jsonify({"error": f"Draft {draft_id} not found"}), 404
+        
+        # Send the zip file
+        return send_file(
+            draft_folder,
+            as_attachment=True,
+            download_name=f"{draft_id}.zip",
+            mimetype='application/zip'
+        )
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to download draft: {str(e)}"}), 500
 
 @app.route('/add_sticker', methods=['POST'])
 def add_sticker():

@@ -8,7 +8,7 @@ import threading
 
 
 # Base URL of the service, please modify according to actual situation
-BASE_URL = "http://localhost:9000"
+BASE_URL = "http://8.148.70.18:9000"
 LICENSE_KEY = "539C3FEB-74AE48D4-A964D52B-C520F801"  # Using trial version license key
 
 def make_request(endpoint, data, method='POST'):

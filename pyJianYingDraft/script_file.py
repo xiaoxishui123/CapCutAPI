@@ -856,32 +856,95 @@ class Script_file:
 
     def dumps(self) -> str:
         """将草稿文件内容导出为JSON字符串"""
-        self.content["fps"] = self.fps
+        self.content["fps"] = float(self.fps)  # 确保fps是浮点数
         self.content["duration"] = self.duration
         self.content["canvas_config"] = {"width": self.width, "height": self.height, "ratio": "original"}
         self.content["materials"] = self.materials.export_json()
 
-        self.content["last_modified_platform"] = {
-            "app_id": 359289,
-            "app_source": "cc",
-            "app_version": "6.5.0",
-            "device_id": "c4ca4238a0b923820dcc509a6f75849b",
-            "hard_disk_id": "307563e0192a94465c0e927fbc482942",
-            "mac_address": "c3371f2d4fb02791c067ce44d8fb4ed5",
-            "os": "mac",
-            "os_version": "15.5"
-        }
+        # 设置渲染模式
+        self.content["render_index_track_mode_on"] = True
+        
+        # 设置颜色空间
+        self.content["color_space"] = -1
 
-        self.content["platform"] = {
-            "app_id": 359289,
-            "app_source": "cc",
-            "app_version": "6.5.0",
-            "device_id": "c4ca4238a0b923820dcc509a6f75849b",
-            "hard_disk_id": "307563e0192a94465c0e927fbc482942",
-            "mac_address": "c3371f2d4fb02791c067ce44d8fb4ed5",
-            "os": "mac",
-            "os_version": "15.5"
-        }
+        # 根据配置选择平台信息
+        try:
+            from settings import get_platform_info
+            platform_info = get_platform_info()
+            if platform_info:
+                # CapCut模式
+                self.content["last_modified_platform"] = platform_info
+                self.content["platform"] = platform_info
+            else:
+                # 剪映模式 - 根据实际系统生成平台信息
+                import platform
+                import uuid
+                
+                # 检测操作系统
+                system = platform.system().lower()
+                if system == "windows":
+                    os_name = "windows"
+                    os_version = platform.release()
+                elif system == "darwin":
+                    os_name = "mac"
+                    os_version = platform.mac_ver()[0]
+                else:
+                    os_name = "linux"
+                    os_version = platform.release()
+                
+                # 生成设备ID
+                device_id = str(uuid.uuid4()).replace("-", "")[:32]
+                hard_disk_id = str(uuid.uuid4()).replace("-", "")[:32]
+                mac_address = str(uuid.uuid4()).replace("-", "")[:32]
+                
+                platform_config = {
+                    "app_id": 3704,
+                    "app_source": "lv",
+                    "app_version": "5.9.0",
+                    "device_id": device_id,
+                    "hard_disk_id": hard_disk_id,
+                    "mac_address": mac_address,
+                    "os": os_name,
+                    "os_version": os_version
+                }
+                
+                self.content["last_modified_platform"] = platform_config
+                self.content["platform"] = platform_config
+        except ImportError:
+            # 默认使用剪映模式 - 根据实际系统生成平台信息
+            import platform
+            import uuid
+            
+            # 检测操作系统
+            system = platform.system().lower()
+            if system == "windows":
+                os_name = "windows"
+                os_version = platform.release()
+            elif system == "darwin":
+                os_name = "mac"
+                os_version = platform.mac_ver()[0]
+            else:
+                os_name = "linux"
+                os_version = platform.release()
+            
+            # 生成设备ID
+            device_id = str(uuid.uuid4()).replace("-", "")[:32]
+            hard_disk_id = str(uuid.uuid4()).replace("-", "")[:32]
+            mac_address = str(uuid.uuid4()).replace("-", "")[:32]
+            
+            platform_config = {
+                "app_id": 3704,
+                "app_source": "lv",
+                "app_version": "5.9.0",
+                "device_id": device_id,
+                "hard_disk_id": hard_disk_id,
+                "mac_address": mac_address,
+                "os": os_name,
+                "os_version": os_version
+            }
+            
+            self.content["last_modified_platform"] = platform_config
+            self.content["platform"] = platform_config
 
         # 合并导入的素材
         for material_type, material_list in self.imported_materials.items():

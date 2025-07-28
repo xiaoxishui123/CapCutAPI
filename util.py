@@ -28,9 +28,23 @@ def is_windows_path(path):
 
 
 def zip_draft(draft_name):
-    # Compress folder
+    # Compress folder contents directly (not the folder itself)
     zip_path = f"./tmp/zip/{draft_name}.zip"
-    shutil.make_archive(f"./tmp/zip/{draft_name}", 'zip', draft_name)
+    
+    # Ensure tmp/zip directory exists
+    import os
+    os.makedirs("./tmp/zip", exist_ok=True)
+    
+    # Create zip file with folder contents, not the folder itself
+    import zipfile
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(draft_name):
+            for file in files:
+                file_path = os.path.join(root, file)
+                # Add file to zip with relative path (without draft_name prefix)
+                arcname = os.path.relpath(file_path, draft_name)
+                zipf.write(file_path, arcname)
+    
     return zip_path
 
 def url_to_hash(url, length=16):

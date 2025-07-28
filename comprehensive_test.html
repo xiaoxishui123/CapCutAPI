@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CapCutAPI 完整测试用例</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { 
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .test-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-controls h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .test-section {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        
+        .test-section-header {
+            background: #495057;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .test-section-content {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success {
+            background: #28a745;
+        }
+        
+        .status-error {
+            background: #dc3545;
+        }
+        
+        .status-pending {
+            background: #ffc107;
+        }
+        
+        .test-summary {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .test-summary h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .summary-stats {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 CapCutAPI 完整测试用例</h1>
+            <p>全面测试CapCutAPI的各项功能</p>
+        </div>
+        
+        <div class="content">
+            <!-- 测试控制区 -->
+            <div class="test-controls">
+                <h3>🚀 测试控制</h3>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="runAllTests()">
+                        <span id="runAllBtn">运行所有测试</span>
+                    </button>
+                    <button class="btn btn-info" onclick="getApiInfo()">获取API信息</button>
+                    <button class="btn btn-warning" onclick="clearAllResults()">清除结果</button>
+                    <button class="btn btn-danger" onclick="resetTestData()">重置测试数据</button>
+                </div>
+            </div>
+            
+            <!-- 测试结果统计 -->
+            <div class="test-summary">
+                <h3>📊 测试统计</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalTests">0</div>
+                        <div class="stat-label">总测试数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="passedTests">0</div>
+                        <div class="stat-label">通过</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="failedTests">0</div>
+                        <div class="stat-label">失败</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="testDuration">0</div>
+                        <div class="stat-label">耗时(秒)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="two-column">
+                <div>
+                    <!-- 1. API信息测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>📋 API信息测试</span>
+                            <span class="status-indicator" id="status-api"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <button class="btn btn-primary" onclick="testApiInfo()">测试API信息</button>
+                            <div id="apiResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 2. 创建草稿测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>📝 创建草稿测试</span>
+                            <span class="status-indicator" id="status-draft"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>草稿名称:</label>
+                                <input type="text" id="draftName" value="自动测试草稿">
+                            </div>
+                            <div class="form-group">
+                                <label>视频尺寸:</label>
+                                <select id="videoSize">
+                                    <option value="1080,1920">竖屏 1080x1920</option>
+                                    <option value="1920,1080">横屏 1920x1080</option>
+                                    <option value="1080,1080">方形 1080x1080</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="testCreateDraft()">创建草稿</button>
+                            <div id="draftResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 3. 添加文本测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>✏️ 添加文本测试</span>
+                            <span class="status-indicator" id="status-text"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>文本内容:</label>
+                                <textarea id="textContent" rows="3">欢迎使用CapCutAPI！
+这是一个测试文本。
+支持多行文本。</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>字体:</label>
+                                <select id="fontSelect">
+                                    <option value="HarmonyOS_Sans_SC_Regular">HarmonyOS_Sans_SC_Regular</option>
+                                    <option value="HarmonyOS_Sans_SC_Bold">HarmonyOS_Sans_SC_Bold</option>
+                                    <option value="Inter_Black">Inter_Black</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>字体颜色:</label>
+                                <input type="color" id="fontColor" value="#FF0000">
+                            </div>
+                            <div class="form-group">
+                                <label>字体大小:</label>
+                                <input type="range" id="fontSize" min="12" max="72" value="30">
+                                <span id="fontSizeValue">30</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="testAddText()">添加文本</button>
+                            <div id="textResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 4. 获取字体列表测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>🎨 字体列表测试</span>
+                            <span class="status-indicator" id="status-fonts"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <button class="btn btn-primary" onclick="testGetFonts()">获取字体列表</button>
+                            <div id="fontsResult" class="result"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <!-- 5. 添加图片测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>🖼️ 添加图片测试</span>
+                            <span class="status-indicator" id="status-image"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>图片URL:</label>
+                                <input type="text" id="imageUrl" value="https://picsum.photos/800/600">
+                            </div>
+                            <div class="form-group">
+                                <label>显示时间(秒):</label>
+                                <input type="number" id="imageDuration" min="1" max="10" value="3">
+                            </div>
+                            <button class="btn btn-primary" onclick="testAddImage()">添加图片</button>
+                            <div id="imageResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 6. 添加音频测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>🎵 添加音频测试</span>
+                            <span class="status-indicator" id="status-audio"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>音频URL:</label>
+                                <input type="text" id="audioUrl" value="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav">
+                            </div>
+                            <div class="form-group">
+                                <label>音量:</label>
+                                <input type="range" id="audioVolume" min="0" max="2" step="0.1" value="1">
+                                <span id="audioVolumeValue">1.0</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="testAddAudio()">添加音频</button>
+                            <div id="audioResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 7. 保存草稿测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>💾 保存草稿测试</span>
+                            <span class="status-indicator" id="status-save"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>保存路径:</label>
+                                <input type="text" id="savePath" value="/tmp/capcut_drafts">
+                            </div>
+                            <button class="btn btn-primary" onclick="testSaveDraft()">保存草稿</button>
+                            <div id="saveResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 8. 综合测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>🔧 综合功能测试</span>
+                            <span class="status-indicator" id="status-comprehensive"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <button class="btn btn-primary" onclick="testComprehensive()">运行综合测试</button>
+                            <div id="comprehensiveResult" class="result"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://8.148.70.18:9000';
+        let currentDraftId = null;
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            startTime: null
+        };
+
+        // 更新字体大小显示
+        document.getElementById('fontSize').addEventListener('input', function() {
+            document.getElementById('fontSizeValue').textContent = this.value;
+        });
+
+        // 更新音量显示
+        document.getElementById('audioVolume').addEventListener('input', function() {
+            document.getElementById('audioVolumeValue').textContent = this.value;
+        });
+
+        // 工具函数
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(`${BASE_URL}${endpoint}`, options);
+                const result = await response.json();
+                return { success: true, data: result };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result, isSuccess, statusId = null) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(result, null, 2);
+            
+            if (statusId) {
+                const statusElement = document.getElementById(statusId);
+                statusElement.className = `status-indicator ${isSuccess ? 'status-success' : 'status-error'}`;
+            }
+        }
+
+        function updateTestStats() {
+            document.getElementById('totalTests').textContent = testResults.total;
+            document.getElementById('passedTests').textContent = testResults.passed;
+            document.getElementById('failedTests').textContent = testResults.failed;
+            
+            if (testResults.startTime) {
+                const duration = ((Date.now() - testResults.startTime) / 1000).toFixed(1);
+                document.getElementById('testDuration').textContent = duration;
+            }
+        }
+
+        function recordTestResult(success) {
+            testResults.total++;
+            if (success) {
+                testResults.passed++;
+            } else {
+                testResults.failed++;
+            }
+            updateTestStats();
+        }
+
+        // 测试函数
+        async function testApiInfo() {
+            console.log('开始测试API信息...');
+            const result = await makeRequest('/');
+            showResult('apiResult', result.data || result.error, result.success, 'status-api');
+            recordTestResult(result.success);
+        }
+
+        async function testCreateDraft() {
+            console.log('开始测试创建草稿...');
+            const draftName = document.getElementById('draftName').value;
+            const [width, height] = document.getElementById('videoSize').value.split(',').map(Number);
+            
+            const result = await makeRequest('/create_draft', 'POST', {
+                draft_name: draftName,
+                width: width,
+                height: height
+            });
+            
+            showResult('draftResult', result.data || result.error, result.success, 'status-draft');
+            recordTestResult(result.success);
+            
+            // 保存草稿ID供后续测试使用
+            if (result.success && result.data.output && result.data.output.draft_id) {
+                currentDraftId = result.data.output.draft_id;
+            }
+        }
+
+        async function testAddText() {
+            console.log('开始测试添加文本...');
+            if (!currentDraftId) {
+                showResult('textResult', { error: '请先创建草稿' }, false, 'status-text');
+                recordTestResult(false);
+                return;
+            }
+
+            const textContent = document.getElementById('textContent').value;
+            const font = document.getElementById('fontSelect').value;
+            const fontColor = document.getElementById('fontColor').value;
+            const fontSize = parseFloat(document.getElementById('fontSize').value);
+
+            const result = await makeRequest('/add_text', 'POST', {
+                draft_id: currentDraftId,
+                text: textContent,
+                start: 0,
+                end: 5,
+                font: font,
+                font_color: fontColor,
+                font_size: fontSize,
+                track_name: "test_text"
+            });
+
+            showResult('textResult', result.data || result.error, result.success, 'status-text');
+            recordTestResult(result.success);
+        }
+
+        async function testGetFonts() {
+            console.log('开始测试获取字体列表...');
+            const result = await makeRequest('/get_font_types');
+            showResult('fontsResult', result.data || result.error, result.success, 'status-fonts');
+            recordTestResult(result.success);
+        }
+
+        async function testAddImage() {
+            console.log('开始测试添加图片...');
+            if (!currentDraftId) {
+                showResult('imageResult', { error: '请先创建草稿' }, false, 'status-image');
+                recordTestResult(false);
+                return;
+            }
+
+            const imageUrl = document.getElementById('imageUrl').value;
+            const duration = parseFloat(document.getElementById('imageDuration').value);
+
+            const result = await makeRequest('/add_image', 'POST', {
+                draft_id: currentDraftId,
+                image_url: imageUrl,
+                start: 0,
+                end: duration,
+                track_name: "test_image"
+            });
+
+            showResult('imageResult', result.data || result.error, result.success, 'status-image');
+            recordTestResult(result.success);
+        }
+
+        async function testAddAudio() {
+            console.log('开始测试添加音频...');
+            if (!currentDraftId) {
+                showResult('audioResult', { error: '请先创建草稿' }, false, 'status-audio');
+                recordTestResult(false);
+                return;
+            }
+
+            const audioUrl = document.getElementById('audioUrl').value;
+            const volume = parseFloat(document.getElementById('audioVolume').value);
+
+            const result = await makeRequest('/add_audio', 'POST', {
+                draft_id: currentDraftId,
+                audio_url: audioUrl,
+                start: 0,
+                end: 5,
+                target_start: 0,
+                volume: volume,
+                track_name: "test_audio"
+            });
+
+            showResult('audioResult', result.data || result.error, result.success, 'status-audio');
+            recordTestResult(result.success);
+        }
+
+        async function testSaveDraft() {
+            console.log('开始测试保存草稿...');
+            if (!currentDraftId) {
+                showResult('saveResult', { error: '请先创建草稿' }, false, 'status-save');
+                recordTestResult(false);
+                return;
+            }
+
+            const savePath = document.getElementById('savePath').value;
+
+            const result = await makeRequest('/save_draft', 'POST', {
+                draft_id: currentDraftId,
+                draft_folder: savePath
+            });
+
+            showResult('saveResult', result.data || result.error, result.success, 'status-save');
+            recordTestResult(result.success);
+        }
+
+        async function testComprehensive() {
+            console.log('开始综合测试...');
+            const element = document.getElementById('comprehensiveResult');
+            element.style.display = 'block';
+            element.className = 'result info';
+            element.textContent = '正在运行综合测试，请稍候...';
+
+            const results = [];
+            
+            // 测试1: 创建草稿
+            try {
+                const draftResult = await makeRequest('/create_draft', 'POST', {
+                    draft_name: '综合测试草稿',
+                    width: 1080,
+                    height: 1920
+                });
+                results.push(`✓ 创建草稿: ${draftResult.success ? '成功' : '失败'}`);
+                
+                if (draftResult.success && draftResult.data.output) {
+                    const draftId = draftResult.data.output.draft_id;
+                    
+                    // 测试2: 添加文本
+                    const textResult = await makeRequest('/add_text', 'POST', {
+                        draft_id: draftId,
+                        text: '综合测试文本',
+                        start: 0,
+                        end: 3,
+                        font: 'HarmonyOS_Sans_SC_Regular',
+                        font_color: '#FF0000',
+                        font_size: 30
+                    });
+                    results.push(`✓ 添加文本: ${textResult.success ? '成功' : '失败'}`);
+                    
+                    // 测试3: 添加图片
+                    const imageResult = await makeRequest('/add_image', 'POST', {
+                        draft_id: draftId,
+                        image_url: 'https://picsum.photos/800/600',
+                        start: 3,
+                        end: 6
+                    });
+                    results.push(`✓ 添加图片: ${imageResult.success ? '成功' : '失败'}`);
+                    
+                    // 测试4: 保存草稿
+                    const saveResult = await makeRequest('/save_draft', 'POST', {
+                        draft_id: draftId,
+                        draft_folder: '/tmp/comprehensive_test'
+                    });
+                    results.push(`✓ 保存草稿: ${saveResult.success ? '成功' : '失败'}`);
+                }
+            } catch (error) {
+                results.push(`✗ 综合测试失败: ${error.message}`);
+            }
+
+            const allSuccess = results.every(r => r.includes('成功'));
+            element.className = `result ${allSuccess ? 'success' : 'error'}`;
+            element.textContent = results.join('\n');
+            
+            recordTestResult(allSuccess);
+            document.getElementById('status-comprehensive').className = 
+                `status-indicator ${allSuccess ? 'status-success' : 'status-error'}`;
+        }
+
+        // 批量测试函数
+        async function runAllTests() {
+            console.log('开始运行所有测试...');
+            testResults = { total: 0, passed: 0, failed: 0, startTime: Date.now() };
+            
+            const runBtn = document.getElementById('runAllBtn');
+            runBtn.innerHTML = '<span class="loading"></span> 测试中...';
+            
+            // 重置所有状态指示器
+            document.querySelectorAll('.status-indicator').forEach(el => {
+                el.className = 'status-indicator status-pending';
+            });
+            
+            try {
+                await testApiInfo();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testCreateDraft();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testAddText();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testGetFonts();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testAddImage();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testAddAudio();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testSaveDraft();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testComprehensive();
+                
+            } catch (error) {
+                console.error('测试过程中发生错误:', error);
+            } finally {
+                runBtn.innerHTML = '运行所有测试';
+                console.log('所有测试完成');
+            }
+        }
+
+        // 辅助函数
+        function getApiInfo() {
+            testApiInfo();
+        }
+
+        function clearAllResults() {
+            document.querySelectorAll('.result').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.status-indicator').forEach(el => {
+                el.className = 'status-indicator';
+            });
+        }
+
+        function resetTestData() {
+            currentDraftId = null;
+            testResults = { total: 0, passed: 0, failed: 0, startTime: null };
+            updateTestStats();
+            clearAllResults();
+        }
+
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            console.log('CapCutAPI测试页面加载完成');
+            updateTestStats();
+        });
+    </script>
+</body>
+</html> 

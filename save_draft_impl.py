@@ -20,7 +20,7 @@ import time
 import requests # Import requests for making HTTP calls
 import logging
 # Import configuration
-from settings import IS_CAPCUT_ENV, IS_UPLOAD_DRAFT
+from settings import IS_CAPCUT_ENV, IS_UPLOAD_DRAFT, DRAFT_DOMAIN, PREVIEW_ROUTER
 
 # --- Get your Logger instance ---
 # The name here must match the logger name you configured in app.py
@@ -93,6 +93,52 @@ def save_draft_background(draft_id, draft_folder, task_id):
         # Choose different template directory based on configuration
         template_dir = "template" if IS_CAPCUT_ENV else "template_jianying"
         draft_folder_for_duplicate.duplicate_as_template(template_dir, draft_id)
+        
+        # Ensure all necessary template files are copied manually
+        logger.info(f"Ensuring all template files are copied to {draft_id}")
+        missing_files = [
+            "attachment_editing.json",
+            "performance_opt_info.json",
+            "common_attachment"
+        ]
+        
+        for missing_file in missing_files:
+            template_path = os.path.join(template_dir, missing_file)
+            draft_path = os.path.join(draft_id, missing_file)
+            if os.path.exists(template_path) and not os.path.exists(draft_path):
+                if os.path.isdir(template_path):
+                    shutil.copytree(template_path, draft_path)
+                    logger.info(f"Copied directory: {missing_file}")
+                else:
+                    shutil.copy2(template_path, draft_path)
+                    logger.info(f"Copied file: {missing_file}")
+            elif not os.path.exists(template_path):
+                logger.warning(f"Template file not found: {template_path}")
+            else:
+                logger.info(f"File already exists: {missing_file}")
+        
+        # 修复draft_meta_info.json中的平台信息
+        meta_info_path = os.path.join(draft_id, "draft_meta_info.json")
+        if os.path.exists(meta_info_path):
+            try:
+                with open(meta_info_path, 'r', encoding='utf-8') as f:
+                    meta_info = json.load(f)
+                
+                # 更新路径为Windows系统路径
+                meta_info["draft_root_path"] = "C:\\Users\\Administrator\\AppData\\Local\\JianyingPro\\User Data\\Projects\\com.lveditor.draft"
+                meta_info["draft_fold_path"] = "C:\\Users\\Administrator\\AppData\\Local\\JianyingPro\\User Data\\Projects\\com.lveditor.draft\\草稿"
+                meta_info["draft_id"] = draft_id
+                meta_info["draft_name"] = f"草稿_{draft_id}"
+                meta_info["tm_draft_create"] = int(time.time() * 1000000)
+                meta_info["tm_draft_modified"] = int(time.time() * 1000000)
+                
+                with open(meta_info_path, "w", encoding="utf-8") as f:
+                    json.dump(meta_info, f, ensure_ascii=False, separators=(',', ':'))
+                logger.info("✅ 修复draft_meta_info.json平台信息")
+            except Exception as e:
+                logger.error(f"修复draft_meta_info.json失败: {str(e)}")
+        else:
+            logger.warning("draft_meta_info.json文件不存在")
         
         # Update task status
         update_task_field(task_id, "message", "Updating media file metadata")
@@ -210,19 +256,81 @@ def save_draft_background(draft_id, draft_folder, task_id):
         
         script.dump(f"{draft_id}/draft_info.json")
         logger.info(f"Draft information has been saved to {draft_id}/draft_info.json.")
+        
+        # Save draft content to draft_content.json
+        script_content = script.dumps()
+        with open(f"{draft_id}/draft_content.json", 'w', encoding='utf-8') as f:
+            f.write(script_content)
+        logger.info(f"Draft content has been saved to {draft_id}/draft_content.json.")
+        
+        # Create draft_content.json.bak backup
+        shutil.copy2(f"{draft_id}/draft_content.json", f"{draft_id}/draft_content.json.bak")
+        logger.info(f"Created backup: draft_content.json.bak")
+        
+        # 修复draft_info.json和draft_content.json中的平台信息
+        try:
+            # 修复draft_info.json
+            info_path = os.path.join(draft_id, "draft_info.json")
+            if os.path.exists(info_path):
+                with open(info_path, 'r', encoding='utf-8') as f:
+                    info_data = json.load(f)
+                
+                # 更新平台信息为Windows系统
+                import uuid
+                info_data["platform"]["os"] = "windows"
+                info_data["platform"]["os_version"] = "10.0.19045"
+                info_data["platform"]["device_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                info_data["platform"]["hard_disk_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                info_data["platform"]["mac_address"] = str(uuid.uuid4()).replace("-", "")[:32]
+                
+                info_data["last_modified_platform"]["os"] = "windows"
+                info_data["last_modified_platform"]["os_version"] = "10.0.19045"
+                info_data["last_modified_platform"]["device_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                info_data["last_modified_platform"]["hard_disk_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                info_data["last_modified_platform"]["mac_address"] = str(uuid.uuid4()).replace("-", "")[:32]
+                
+                with open(info_path, "w", encoding="utf-8") as f:
+                    json.dump(info_data, f, ensure_ascii=False, indent=4)
+                logger.info("✅ 修复draft_info.json平台信息")
+            
+            # 修复draft_content.json
+            content_path = os.path.join(draft_id, "draft_content.json")
+            if os.path.exists(content_path):
+                with open(content_path, 'r', encoding='utf-8') as f:
+                    content_data = json.load(f)
+                
+                # 更新平台信息为Windows系统
+                content_data["platform"]["os"] = "windows"
+                content_data["platform"]["os_version"] = "10.0.19045"
+                content_data["platform"]["device_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                content_data["platform"]["hard_disk_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                content_data["platform"]["mac_address"] = str(uuid.uuid4()).replace("-", "")[:32]
+                
+                content_data["last_modified_platform"]["os"] = "windows"
+                content_data["last_modified_platform"]["os_version"] = "10.0.19045"
+                content_data["last_modified_platform"]["device_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                content_data["last_modified_platform"]["hard_disk_id"] = str(uuid.uuid4()).replace("-", "")[:32]
+                content_data["last_modified_platform"]["mac_address"] = str(uuid.uuid4()).replace("-", "")[:32]
+                
+                with open(content_path, "w", encoding="utf-8") as f:
+                    json.dump(content_data, f, ensure_ascii=False, indent=4)
+                logger.info("✅ 修复draft_content.json平台信息")
+                
+        except Exception as e:
+            logger.error(f"修复平台信息失败: {str(e)}")
 
         draft_url = ""
-        # Only upload draft information when IS_UPLOAD_DRAFT is True
+        # Always compress draft files for local storage
+        # Update task status - Start compressing draft
+        update_task_field(task_id, "progress", 80)
+        update_task_field(task_id, "message", "Compressing draft files")
+        logger.info(f"Task {task_id} progress 80%: Compressing draft files.")
+        
+        # Compress the entire draft directory
+        zip_path = zip_draft(draft_id)
+        logger.info(f"Draft directory {draft_id} has been compressed to {zip_path}.")
+        
         if IS_UPLOAD_DRAFT:
-            # Update task status - Start compressing draft
-            update_task_field(task_id, "progress", 80)
-            update_task_field(task_id, "message", "Compressing draft files")
-            logger.info(f"Task {task_id} progress 80%: Compressing draft files.")
-            
-            # Compress the entire draft directory
-            zip_path = zip_draft(draft_id)
-            logger.info(f"Draft directory {draft_id} has been compressed to {zip_path}.")
-            
             # Update task status - Start uploading to OSS
             update_task_field(task_id, "progress", 90)
             update_task_field(task_id, "message", "Uploading to cloud storage")
@@ -237,6 +345,14 @@ def save_draft_background(draft_id, draft_folder, task_id):
             if os.path.exists(draft_id):
                 shutil.rmtree(draft_id)
                 logger.info(f"Cleaned up temporary draft folder: {draft_id}")
+        else:
+            # Local download mode - generate local download URL
+            draft_url = f"{DRAFT_DOMAIN}{PREVIEW_ROUTER}?draft_id={draft_id}"
+            logger.info(f"Draft archive saved locally, download URL: {draft_url}")
+            update_task_field(task_id, "draft_url", draft_url)
+            
+            # Keep the draft folder for local download
+            logger.info(f"Draft folder {draft_id} kept for local download")
 
     
         # Update task status - Completed
