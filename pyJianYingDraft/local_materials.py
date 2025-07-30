@@ -2,8 +2,19 @@ import os
 import uuid
 import subprocess
 import json
-from typing import Optional, Literal
-from typing import Dict, Any
+from typing import Optional, Dict, Any
+import sys
+
+# Python 3.6兼容性处理
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    # 为Python 3.6创建一个简单的Literal类型
+    class Literal:
+        def __init__(self, *args):
+            self.args = args
+        def __getitem__(self, key):
+            return key
 import imageio.v2 as imageio
 
 class Crop_settings:

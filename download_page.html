@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载修复后的草稿文件</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .file-list {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+        .download-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .download-btn:hover {
+            background: #0056b3;
+        }
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background: #218838;
+        }
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            color: #0056b3;
+            margin-top: 0;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .no-files {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📥 下载修复后的草稿文件</h1>
+            <p>这里列出了所有已修复的草稿文件，您可以直接下载使用。</p>
+        </div>
+        
+        <button class="refresh-btn" onclick="loadFileList()">🔄 刷新文件列表</button>
+        
+        <div class="instructions">
+            <h3>📋 使用说明</h3>
+            <ol>
+                <li><strong>下载文件</strong>：点击下方的"下载"按钮下载修复后的草稿文件</li>
+                <li><strong>复制到剪映</strong>：将下载的ZIP文件复制到剪映的草稿目录</li>
+                <li><strong>重启剪映</strong>：重启剪映软件以确保新文件被识别</li>
+                <li><strong>打开草稿</strong>：在剪映中打开修复后的草稿</li>
+                <li><strong>检查媒体</strong>：确认媒体文件是否正常显示</li>
+            </ol>
+        </div>
+        
+        <div class="file-list">
+            <h3>📁 可下载的修复文件</h3>
+            <div id="fileList">
+                <div class="loading">正在加载文件列表...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://8.148.70.18:9000';
+        
+        async function loadFileList() {
+            const fileListDiv = document.getElementById('fileList');
+            fileListDiv.innerHTML = '<div class="loading">正在加载文件列表...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/list_fixed_drafts`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.files.length === 0) {
+                        fileListDiv.innerHTML = '<div class="no-files">暂无修复文件可下载</div>';
+                    } else {
+                        let html = '';
+                        result.files.forEach(file => {
+                            const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
+                            html += `
+                                <div class="file-item">
+                                    <div class="file-info">
+                                        <div class="file-name">${file.filename}</div>
+                                        <div class="file-size">文件大小: ${sizeInMB} MB</div>
+                                    </div>
+                                    <a href="${API_BASE}${file.download_url}" class="download-btn" download>
+                                        📥 下载
+                                    </a>
+                                </div>
+                            `;
+                        });
+                        fileListDiv.innerHTML = html;
+                    }
+                } else {
+                    fileListDiv.innerHTML = `<div class="no-files">加载失败: ${result.error}</div>`;
+                }
+            } catch (error) {
+                fileListDiv.innerHTML = `<div class="no-files">加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 页面加载时自动加载文件列表
+        window.addEventListener('load', loadFileList);
+    </script>
+</body>
+</html> 

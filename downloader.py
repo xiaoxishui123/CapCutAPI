@@ -112,6 +112,24 @@ def download_file(url:str, local_filename, max_retries=3, timeout=180):
     # Extract directory part
     directory = os.path.dirname(local_filename)
 
+    # 检查是否是豆包OSS URL，如果是则添加特殊的HTTP头
+    if 'ark-content-generation-cn-beijing.tos-cn-beijing.volces.com' in url:
+        print(f"检测到豆包OSS URL，使用特殊HTTP头进行下载: {url}")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'video/mp4,video/*,*/*;q=0.9',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': 'https://doubao.com/',
+            'Sec-Fetch-Dest': 'video',
+            'Sec-Fetch-Mode': 'no-cors',
+            'Sec-Fetch-Site': 'cross-site'
+        }
+    else:
+        headers = {}
+
     retries = 0
     while retries < max_retries:
         try:
@@ -128,7 +146,8 @@ def download_file(url:str, local_filename, max_retries=3, timeout=180):
                 os.makedirs(directory, exist_ok=True)
                 print(f"Created directory: {directory}")
 
-            with requests.get(url, stream=True, timeout=timeout) as response:
+            # 使用headers进行下载
+            with requests.get(url, stream=True, timeout=timeout, headers=headers) as response:
                 response.raise_for_status()
                 
                 total_size = int(response.headers.get('content-length', 0))

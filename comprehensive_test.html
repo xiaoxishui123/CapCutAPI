@@ -483,7 +483,39 @@
                         </div>
                     </div>
                     
-                    <!-- 8. 综合测试 -->
+                    <!-- 8. 下载草稿测试 -->
+                    <div class="test-section">
+                        <div class="test-section-header">
+                            <span>📥 下载草稿测试</span>
+                            <span class="status-indicator" id="status-download"></span>
+                        </div>
+                        <div class="test-section-content">
+                            <div class="form-group">
+                                <label>草稿URL:</label>
+                                <input type="text" id="draftUrl" value="http://zdaigfpt.oss-cn-wuhan-lr.aliyuncs.com/dfd_cat_1753754237_75267d20.zip?OSSAccessKeyId=LTAI5tLhTQGk2Di25ArrkgGG&Expires=1753840685&Signature=RK%2Bzp7ZvezNN%2FFw5mMUc9DQPBdY%3D" style="font-size: 12px;">
+                            </div>
+                            <div class="form-group">
+                                <label>修复方法:</label>
+                                <select id="fixMethod">
+                                    <option value="smart">智能修复 (推荐)</option>
+                                    <option value="direct">直接修改</option>
+                                    <option value="traditional">传统修复</option>
+                                    <option value="server">服务器端修复</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>操作:</label>
+                                <div class="button-group">
+                                    <button class="btn btn-primary" onclick="testDownloadDraft()">下载并修复</button>
+                                    <button class="btn btn-info" onclick="testDownloadOnly()">仅下载</button>
+                                    <button class="btn btn-warning" onclick="testFixOnly()">仅修复</button>
+                                </div>
+                            </div>
+                            <div id="downloadResult" class="result"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 9. 综合测试 -->
                     <div class="test-section">
                         <div class="test-section-header">
                             <span>🔧 综合功能测试</span>
@@ -501,6 +533,7 @@
 
     <script>
         const BASE_URL = 'http://8.148.70.18:9000';
+        const DOWNLOAD_API_URL = 'http://8.148.70.18:9000';
         let currentDraftId = null;
         let testResults = {
             total: 0,
@@ -520,8 +553,12 @@
         });
 
         // 工具函数
-        async function makeRequest(endpoint, method = 'GET', data = null) {
+        async function makeRequest(endpoint, method = 'GET', data = null, baseUrl = BASE_URL) {
             try {
+                console.log(`🌐 发起请求: ${baseUrl}${endpoint}`);
+                console.log(`📝 请求方法: ${method}`);
+                console.log(`📦 请求数据:`, data);
+                
                 const options = {
                     method: method,
                     headers: {
@@ -532,10 +569,18 @@
                     options.body = JSON.stringify(data);
                 }
                 
-                const response = await fetch(`${BASE_URL}${endpoint}`, options);
+                const response = await fetch(`${baseUrl}${endpoint}`, options);
+                console.log(`📡 响应状态: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const result = await response.json();
+                console.log(`✅ 请求成功:`, result);
                 return { success: true, data: result };
             } catch (error) {
+                console.error(`❌ 请求失败:`, error);
                 return { success: false, error: error.message };
             }
         }
@@ -703,6 +748,140 @@
             recordTestResult(result.success);
         }
 
+        async function testDownloadDraft() {
+            console.log('开始测试下载并修复草稿...');
+            const draftUrl = document.getElementById('draftUrl').value;
+            const fixMethod = document.getElementById('fixMethod').value;
+            
+            const element = document.getElementById('downloadResult');
+            element.style.display = 'block';
+            element.className = 'result info';
+            element.textContent = '正在下载并修复草稿，请稍候...';
+            
+            try {
+                // 调用下载并修复API
+                const result = await makeRequest('/api/download_and_fix_draft', 'POST', {
+                    draft_url: draftUrl,
+                    fix_method: fixMethod
+                }, DOWNLOAD_API_URL);
+                
+                if (result.success) {
+                    element.className = 'result success';
+                    let resultText = `✅ 下载并修复成功！\n\n修复方法: ${fixMethod}\n下载URL: ${draftUrl}\n\n修复结果:\n${JSON.stringify(result.data, null, 2)}`;
+                    
+                    // 如果有下载链接，添加下载按钮
+                    if (result.data && result.data.download_url) {
+                        resultText += `\n\n🎉 修复后的草稿文件已准备就绪！`;
+                        element.innerHTML = resultText.replace(/\n/g, '<br>');
+                        
+                        const downloadBtn = document.createElement('a');
+                        downloadBtn.href = result.data.download_url;
+                        downloadBtn.download = '';
+                        downloadBtn.className = 'download-btn';
+                        downloadBtn.style.cssText = `
+                            background: #007bff; 
+                            color: white; 
+                            padding: 12px 24px; 
+                            text-decoration: none; 
+                            border-radius: 5px; 
+                            display: inline-block;
+                            font-weight: bold;
+                            margin-top: 15px;
+                        `;
+                        downloadBtn.textContent = '📥 下载修复后的草稿文件';
+                        element.appendChild(downloadBtn);
+                    } else {
+                        element.textContent = resultText;
+                    }
+                } else {
+                    element.className = 'result error';
+                    element.textContent = `❌ 下载并修复失败！\n\n错误信息:\n${JSON.stringify(result.error, null, 2)}`;
+                }
+                
+                recordTestResult(result.success);
+                document.getElementById('status-download').className = 
+                    `status-indicator ${result.success ? 'status-success' : 'status-error'}`;
+                
+            } catch (error) {
+                element.className = 'result error';
+                element.textContent = `❌ 测试失败: ${error.message}`;
+                recordTestResult(false);
+                document.getElementById('status-download').className = 'status-indicator status-error';
+            }
+        }
+
+        async function testDownloadOnly() {
+            console.log('开始测试仅下载草稿...');
+            const draftUrl = document.getElementById('draftUrl').value;
+            
+            const element = document.getElementById('downloadResult');
+            element.style.display = 'block';
+            element.className = 'result info';
+            element.textContent = '正在下载草稿，请稍候...';
+            
+            try {
+                // 调用仅下载API
+                const result = await makeRequest('/api/download_draft', 'POST', {
+                    draft_url: draftUrl
+                }, DOWNLOAD_API_URL);
+                
+                if (result.success) {
+                    element.className = 'result success';
+                    element.textContent = `✅ 下载成功！\n\n下载URL: ${draftUrl}\n\n下载结果:\n${JSON.stringify(result.data, null, 2)}`;
+                } else {
+                    element.className = 'result error';
+                    element.textContent = `❌ 下载失败！\n\n错误信息:\n${JSON.stringify(result.error, null, 2)}`;
+                }
+                
+                recordTestResult(result.success);
+                document.getElementById('status-download').className = 
+                    `status-indicator ${result.success ? 'status-success' : 'status-error'}`;
+                
+            } catch (error) {
+                element.className = 'result error';
+                element.textContent = `❌ 测试失败: ${error.message}`;
+                recordTestResult(false);
+                document.getElementById('status-download').className = 'status-indicator status-error';
+            }
+        }
+
+        async function testFixOnly() {
+            console.log('开始测试仅修复草稿...');
+            const draftUrl = document.getElementById('draftUrl').value;
+            const fixMethod = document.getElementById('fixMethod').value;
+            
+            const element = document.getElementById('downloadResult');
+            element.style.display = 'block';
+            element.className = 'result info';
+            element.textContent = '正在修复草稿，请稍候...';
+            
+            try {
+                // 调用仅修复API
+                const result = await makeRequest('/api/fix_draft', 'POST', {
+                    draft_url: draftUrl,
+                    fix_method: fixMethod
+                }, DOWNLOAD_API_URL);
+                
+                if (result.success) {
+                    element.className = 'result success';
+                    element.textContent = `✅ 修复成功！\n\n修复方法: ${fixMethod}\n草稿URL: ${draftUrl}\n\n修复结果:\n${JSON.stringify(result.data, null, 2)}`;
+                } else {
+                    element.className = 'result error';
+                    element.textContent = `❌ 修复失败！\n\n错误信息:\n${JSON.stringify(result.error, null, 2)}`;
+                }
+                
+                recordTestResult(result.success);
+                document.getElementById('status-download').className = 
+                    `status-indicator ${result.success ? 'status-success' : 'status-error'}`;
+                
+            } catch (error) {
+                element.className = 'result error';
+                element.textContent = `❌ 测试失败: ${error.message}`;
+                recordTestResult(false);
+                document.getElementById('status-download').className = 'status-indicator status-error';
+            }
+        }
+
         async function testComprehensive() {
             console.log('开始综合测试...');
             const element = document.getElementById('comprehensiveResult');
@@ -798,6 +977,9 @@
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 await testSaveDraft();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                await testDownloadDraft();
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 await testComprehensive();

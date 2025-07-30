@@ -6,7 +6,19 @@
 import uuid
 from copy import deepcopy
 
-from typing import Optional, Literal, Union, overload
+from typing import Optional, Union, overload
+import sys
+
+# Python 3.6兼容性处理
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    # 为Python 3.6创建一个简单的Literal类型
+    class Literal:
+        def __init__(self, *args):
+            self.args = args
+        def __getitem__(self, key):
+            return key
 from typing import Dict, List, Tuple, Any
 
 from pyJianYingDraft.metadata.capcut_effect_meta import CapCut_Video_character_effect_type, CapCut_Video_scene_effect_type

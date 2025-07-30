@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路径格式测试页面</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .path-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .download-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .download-btn:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 路径格式测试页面</h1>
+        
+        <div class="instructions">
+            <h3>📋 测试说明</h3>
+            <ol>
+                <li>点击下面的下载按钮，逐个下载不同路径格式的测试文件</li>
+                <li>在剪映中打开每个测试文件</li>
+                <li>检查是否还有"媒体丢失"或"链接媒体"的错误</li>
+                <li>记录哪个文件能正常显示媒体文件</li>
+                <li>告诉我哪个格式有效，我会更新修复器</li>
+            </ol>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 1: 标准路径格式</div>
+            <div class="test-description">使用完整的assets目录路径</div>
+            <div class="path-info">音频路径: assets/audio/audio_9869932344c1c9d3.mp3<br>视频路径: assets/video/image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_1.zip" class="download-btn" download>📥 下载测试文件 1</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 2: 相对路径格式</div>
+            <div class="test-description">使用./开头的相对路径</div>
+            <div class="path-info">音频路径: ./assets/audio/audio_9869932344c1c9d3.mp3<br>视频路径: ./assets/video/image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_2.zip" class="download-btn" download>📥 下载测试文件 2</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 3: 上级目录路径</div>
+            <div class="test-description">使用../开头的上级目录路径</div>
+            <div class="path-info">音频路径: ../assets/audio/audio_9869932344c1c9d3.mp3<br>视频路径: ../assets/video/image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_3.zip" class="download-btn" download>📥 下载测试文件 3</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 4: 简化路径格式</div>
+            <div class="test-description">只使用文件名，不包含目录</div>
+            <div class="path-info">音频路径: audio_9869932344c1c9d3.mp3<br>视频路径: image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_4.zip" class="download-btn" download>📥 下载测试文件 4</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 5: 单层目录路径</div>
+            <div class="test-description">使用单层目录结构</div>
+            <div class="path-info">音频路径: audio/audio_9869932344c1c9d3.mp3<br>视频路径: video/image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_5.zip" class="download-btn" download>📥 下载测试文件 5</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 6: 混合路径格式</div>
+            <div class="test-description">使用assets目录但不包含子目录</div>
+            <div class="path-info">音频路径: assets/audio_9869932344c1c9d3.mp3<br>视频路径: assets/image_81fa0547ac2dcba5.png</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_6.zip" class="download-btn" download>📥 下载测试文件 6</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 7: 重复单层目录</div>
+            <div class="test-description">使用重复的单层目录结构</div>
+            <div class="path-info">音频路径: audio/audio_9869932344c1c9d3.mp3<br>视频路径: video/video_9869932344c1c9d3.mp3</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_7.zip" class="download-btn" download>📥 下载测试文件 7</a>
+        </div>
+
+        <div class="test-item">
+            <div class="test-title">测试 8: 最简化路径</div>
+            <div class="test-description">使用最简化的路径格式</div>
+            <div class="path-info">音频路径: audio_9869932344c1c9d3.mp3<br>视频路径: video_9869932344c1c9d3.mp3</div>
+            <a href="/download_fixed_draft/dfd_cat_1753754237_75267d20_path_test_8.zip" class="download-btn" download>📥 下载测试文件 8</a>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+            <h3>💡 测试结果反馈</h3>
+            <p>请测试完这些文件后，告诉我：</p>
+            <ul>
+                <li>哪个测试文件能在剪映中正常显示媒体文件？</li>
+                <li>是否还有"媒体丢失"或"链接媒体"的错误？</li>
+                <li>音频和视频文件是否都能正常播放？</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

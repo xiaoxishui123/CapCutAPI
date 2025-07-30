@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载草稿调试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        button {
+            padding: 12px 24px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-danger { background: #dc3545; color: white; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .console {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 下载草稿调试页面</h1>
+        <p>这个页面用于调试下载草稿功能的问题</p>
+        
+        <div class="test-section">
+            <h3>🌐 API连接测试</h3>
+            <button class="btn-primary" onclick="testConnection()">测试API连接</button>
+            <div id="connectionResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📥 下载草稿测试</h3>
+            <div class="form-group">
+                <label>草稿URL:</label>
+                <input type="text" id="draftUrl" value="http://zdaigfpt.oss-cn-wuhan-lr.aliyuncs.com/dfd_cat_1753754237_75267d20.zip?OSSAccessKeyId=LTAI5tLhTQGk2Di25ArrkgGG&Expires=1753840685&Signature=RK%2Bzp7ZvezNN%2FFw5mMUc9DQPBdY%3D">
+            </div>
+            <div class="form-group">
+                <label>修复方法:</label>
+                <select id="fixMethod">
+                    <option value="smart">智能修复 (推荐)</option>
+                    <option value="direct">直接修改</option>
+                    <option value="traditional">传统修复</option>
+                    <option value="server">服务器端修复</option>
+                </select>
+            </div>
+            <button class="btn-success" onclick="testDownloadAndFix()">下载并修复</button>
+            <button class="btn-warning" onclick="testDownloadOnly()">仅下载</button>
+            <button class="btn-danger" onclick="testFixOnly()">仅修复</button>
+            <div id="downloadResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 控制台日志</h3>
+            <div id="console" class="console"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://8.148.70.18:9000';
+        
+        // 控制台日志函数
+        function log(message, type = 'info') {
+            const console = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#339af0';
+            console.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span>\n`;
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                log(`🌐 发起请求: ${API_URL}${endpoint}`, 'info');
+                log(`📝 请求方法: ${method}`, 'info');
+                if (data) {
+                    log(`📦 请求数据: ${JSON.stringify(data, null, 2)}`, 'info');
+                }
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                log(`⏳ 等待响应...`, 'info');
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                log(`📡 响应状态: ${response.status} ${response.statusText}`, 'info');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                log(`✅ 请求成功`, 'success');
+                return { success: true, data: result };
+            } catch (error) {
+                log(`❌ 请求失败: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+        
+        function showResult(elementId, result, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(result, null, 2);
+        }
+        
+        async function testConnection() {
+            log('开始测试API连接...', 'info');
+            const result = await makeRequest('/');
+            showResult('connectionResult', result.data || result.error, result.success);
+            if (result.success) {
+                log('✅ API连接测试成功', 'success');
+            } else {
+                log('❌ API连接测试失败', 'error');
+            }
+        }
+        
+                        async function testDownloadAndFix() {
+                    log('开始测试下载并修复...', 'info');
+                    const draftUrl = document.getElementById('draftUrl').value;
+                    const fixMethod = document.getElementById('fixMethod').value;
+                    
+                    const result = await makeRequest('/api/download_and_fix_draft', 'POST', {
+                        draft_url: draftUrl,
+                        fix_method: fixMethod
+                    });
+                    
+                    showResult('downloadResult', result.data || result.error, result.success);
+                    if (result.success) {
+                        log('✅ 下载并修复测试成功', 'success');
+                        
+                        // 如果有下载链接，显示下载按钮
+                        if (result.data && result.data.download_url) {
+                            const downloadDiv = document.createElement('div');
+                            downloadDiv.style.marginTop = '15px';
+                            downloadDiv.style.padding = '15px';
+                            downloadDiv.style.backgroundColor = '#d4edda';
+                            downloadDiv.style.border = '1px solid #c3e6cb';
+                            downloadDiv.style.borderRadius = '5px';
+                            downloadDiv.innerHTML = `
+                                <h4 style="margin: 0 0 10px 0; color: #155724;">🎉 修复成功！</h4>
+                                <p style="margin: 0 0 15px 0; color: #155724;">修复后的草稿文件已准备就绪，您可以直接下载：</p>
+                                <a href="${result.data.download_url}" class="download-btn" download style="
+                                    background: #007bff; 
+                                    color: white; 
+                                    padding: 12px 24px; 
+                                    text-decoration: none; 
+                                    border-radius: 5px; 
+                                    display: inline-block;
+                                    font-weight: bold;
+                                ">📥 下载修复后的草稿文件</a>
+                            `;
+                            document.getElementById('downloadResult').appendChild(downloadDiv);
+                        }
+                    } else {
+                        log('❌ 下载并修复测试失败', 'error');
+                    }
+                }
+        
+        async function testDownloadOnly() {
+            log('开始测试仅下载...', 'info');
+            const draftUrl = document.getElementById('draftUrl').value;
+            
+            const result = await makeRequest('/api/download_draft', 'POST', {
+                draft_url: draftUrl
+            });
+            
+            showResult('downloadResult', result.data || result.error, result.success);
+            if (result.success) {
+                log('✅ 仅下载测试成功', 'success');
+            } else {
+                log('❌ 仅下载测试失败', 'error');
+            }
+        }
+        
+        async function testFixOnly() {
+            log('开始测试仅修复...', 'info');
+            const draftUrl = document.getElementById('draftUrl').value;
+            const fixMethod = document.getElementById('fixMethod').value;
+            
+            const result = await makeRequest('/api/fix_draft', 'POST', {
+                draft_url: draftUrl,
+                fix_method: fixMethod
+            });
+            
+            showResult('downloadResult', result.data || result.error, result.success);
+            if (result.success) {
+                log('✅ 仅修复测试成功', 'success');
+            } else {
+                log('❌ 仅修复测试失败', 'error');
+            }
+        }
+        
+        // 页面加载时自动测试连接
+        window.addEventListener('load', function() {
+            log('页面加载完成，开始调试...', 'info');
+            testConnection();
+        });
+    </script>
+</body>
+</html> 

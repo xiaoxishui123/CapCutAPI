@@ -4,7 +4,19 @@ import pyJianYingDraft as draft
 import shutil
 from util import zip_draft, is_windows_path
 from oss import upload_to_oss
-from typing import Dict, Literal
+from typing import Dict
+import sys
+
+# Python 3.6兼容性处理
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    # 为Python 3.6创建一个简单的Literal类型
+    class Literal:
+        def __init__(self, *args):
+            self.args = args
+        def __getitem__(self, key):
+            return key
 from draft_cache import DRAFT_CACHE
 from save_task_cache import DRAFT_TASKS, get_task_status, update_tasks_cache, update_task_field, increment_task_field, update_task_fields, create_task
 from downloader import download_audio, download_file, download_image, download_video

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🌐 CORS跨域请求测试</h1>
+    
+    <div class="test-section">
+        <h3>健康检查测试</h3>
+        <button class="btn-primary" onclick="testHealth()">测试健康检查</button>
+        <div id="healthResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>下载草稿测试</h3>
+        <button class="btn-success" onclick="testDownload()">测试下载草稿</button>
+        <div id="downloadResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>下载并修复测试</h3>
+        <button class="btn-success" onclick="testDownloadAndFix()">测试下载并修复</button>
+        <div id="fixResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://8.148.70.18:9001';
+        
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                console.log(`请求: ${API_URL}${endpoint}`);
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                console.log(`响应状态: ${response.status}`);
+                
+                const result = await response.json();
+                return { success: true, data: result };
+            } catch (error) {
+                console.error('请求错误:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        function showResult(elementId, result, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(result, null, 2);
+        }
+        
+        async function testHealth() {
+            console.log('开始健康检查测试...');
+            const result = await makeRequest('/health');
+            showResult('healthResult', result.data || result.error, result.success);
+        }
+        
+        async function testDownload() {
+            console.log('开始下载测试...');
+            const result = await makeRequest('/download_draft', 'POST', {
+                draft_url: 'http://zdaigfpt.oss-cn-wuhan-lr.aliyuncs.com/dfd_cat_1753754237_75267d20.zip?OSSAccessKeyId=LTAI5tLhTQGk2Di25ArrkgGG&Expires=1753840685&Signature=RK%2Bzp7ZvezNN%2FFw5mMUc9DQPBdY%3D'
+            });
+            showResult('downloadResult', result.data || result.error, result.success);
+        }
+        
+        async function testDownloadAndFix() {
+            console.log('开始下载并修复测试...');
+            const result = await makeRequest('/download_and_fix_draft', 'POST', {
+                draft_url: 'http://zdaigfpt.oss-cn-wuhan-lr.aliyuncs.com/dfd_cat_1753754237_75267d20.zip?OSSAccessKeyId=LTAI5tLhTQGk2Di25ArrkgGG&Expires=1753840685&Signature=RK%2Bzp7ZvezNN%2FFw5mMUc9DQPBdY%3D',
+                fix_method: 'smart'
+            });
+            showResult('fixResult', result.data || result.error, result.success);
+        }
+        
+        // 页面加载时自动运行健康检查
+        window.addEventListener('load', function() {
+            console.log('页面加载完成，开始CORS测试...');
+            testHealth();
+        });
+    </script>
+</body>
+</html> 

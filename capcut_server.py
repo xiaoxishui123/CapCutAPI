@@ -34,6 +34,12 @@ from util import generate_draft_url as utilgenerate_draft_url
 
 from settings.local import IS_CAPCUT_ENV, DRAFT_DOMAIN, PREVIEW_ROUTER
 
+# 导入下载修复相关模块
+from smart_draft_fixer import SmartDraftFixer
+from direct_draft_fixer import DirectDraftFixer
+import simple_draft_fixer
+from server_side_draft_fixer import ServerSideDraftFixer
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
@@ -81,6 +87,239 @@ def comprehensive_test_page():
         return send_file('comprehensive_test.html')
     except Exception as e:
         return jsonify({"error": f"无法加载完整测试页面: {str(e)}"}), 500
+
+@app.route('/debug_download.html', methods=['GET'])
+def debug_download_page():
+    """提供下载草稿调试页面"""
+    try:
+        return send_file('debug_download.html')
+    except Exception as e:
+        return jsonify({"error": f"无法加载调试页面: {str(e)}"}), 500
+
+@app.route('/download_page.html', methods=['GET'])
+def download_page():
+    """提供下载页面"""
+    try:
+        return send_file('download_page.html')
+    except Exception as e:
+        return jsonify({"error": f"无法加载下载页面: {str(e)}"}), 500
+
+@app.route('/路径格式测试页面.html', methods=['GET'])
+def path_test_page():
+    """提供路径格式测试页面"""
+    try:
+        return send_file('路径格式测试页面.html')
+    except Exception as e:
+        return jsonify({"error": f"无法加载路径格式测试页面: {str(e)}"}), 500
+
+@app.route('/api/download_draft', methods=['POST'])
+def api_download_draft():
+    """仅下载草稿API"""
+    try:
+        data = request.get_json()
+        draft_url = data.get('draft_url')
+        
+        if not draft_url:
+            return jsonify({
+                "success": False,
+                "error": "缺少draft_url参数"
+            })
+        
+        # 使用智能修复器进行下载
+        fixer = SmartDraftFixer(draft_url)
+        result = fixer.download_draft()
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"下载失败: {str(e)}"
+        })
+
+@app.route('/api/fix_draft', methods=['POST'])
+def api_fix_draft():
+    """仅修复草稿API"""
+    try:
+        data = request.get_json()
+        draft_url = data.get('draft_url')
+        fix_method = data.get('fix_method', 'smart')
+        
+        if not draft_url:
+            return jsonify({
+                "success": False,
+                "error": "缺少draft_url参数"
+            })
+        
+        # 根据修复方法选择对应的修复器
+        if fix_method == 'smart':
+            fixer = SmartDraftFixer(draft_url)
+            result = fixer.fix_draft()
+        elif fix_method == 'direct':
+            fixer = DirectDraftFixer(draft_url)
+            result = fixer.fix_draft()
+        elif fix_method == 'traditional':
+            result = simple_draft_fixer.download_and_fix_draft(draft_url)
+        elif fix_method == 'server':
+            fixer = ServerSideDraftFixer(draft_url)
+            result = fixer.fix_draft()
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"不支持的修复方法: {fix_method}"
+            })
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"修复失败: {str(e)}"
+        })
+
+@app.route('/api/download_and_fix_draft', methods=['POST'])
+def api_download_and_fix_draft():
+    """下载并修复草稿API"""
+    try:
+        data = request.get_json()
+        draft_url = data.get('draft_url')
+        fix_method = data.get('fix_method', 'smart')
+        
+        if not draft_url:
+            return jsonify({
+                "success": False,
+                "error": "缺少draft_url参数"
+            })
+        
+        # 根据修复方法选择对应的修复器
+        if fix_method == 'smart':
+            fixer = SmartDraftFixer(draft_url)
+            result = fixer.download_and_fix_draft()
+        elif fix_method == 'direct':
+            fixer = DirectDraftFixer(draft_url)
+            result = fixer.download_and_fix_draft()
+        elif fix_method == 'traditional':
+            result = simple_draft_fixer.download_and_fix_draft(draft_url)
+        elif fix_method == 'server':
+            fixer = ServerSideDraftFixer(draft_url)
+            result = fixer.download_and_fix_draft()
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"不支持的修复方法: {fix_method}"
+            })
+        
+        # 如果修复成功，生成直接下载链接
+        if result.get("success") and result.get("fix_info", {}).get("success"):
+            fixed_file = result["fix_info"]["fixed_file"]
+            filename = os.path.basename(fixed_file)
+            download_url = f"http://8.148.70.18:9000/download_fixed_draft/{filename}"
+            
+            result["download_url"] = download_url
+            result["message"] = "下载并修复成功，可直接下载修复后的文件"
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"下载并修复失败: {str(e)}"
+        })
+
+@app.route('/api/get_fix_methods', methods=['GET'])
+def api_get_fix_methods():
+    """获取可用的修复方法"""
+    return jsonify({
+        "success": True,
+        "methods": [
+            {
+                "value": "smart",
+                "name": "智能修复",
+                "description": "只修复需要修复的部分，处理时间最短",
+                "recommended": True
+            },
+            {
+                "value": "direct",
+                "name": "直接修改",
+                "description": "在原始文件基础上直接修改，保留文件完整性"
+            },
+            {
+                "value": "traditional",
+                "name": "传统修复",
+                "description": "完全重建文件结构，适用于严重损坏的草稿"
+            },
+            {
+                "value": "server",
+                "name": "服务器端修复",
+                "description": "直接在服务器上修改文件，无需文件传输"
+            }
+        ]
+    })
+
+@app.route('/download_fixed_draft/<filename>', methods=['GET'])
+def download_fixed_draft(filename):
+    """下载修复后的草稿文件"""
+    try:
+        # 安全检查：只允许下载fixed_drafts目录下的文件
+        if not filename.endswith('.zip') or '..' in filename or '/' in filename:
+            return jsonify({
+                "success": False,
+                "error": "无效的文件名"
+            }), 400
+        
+        file_path = os.path.join('./fixed_drafts', filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({
+                "success": False,
+                "error": "文件不存在"
+            }), 404
+        
+        # 返回文件下载
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/zip'
+        )
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"下载失败: {str(e)}"
+        }), 500
+
+@app.route('/list_fixed_drafts', methods=['GET'])
+def list_fixed_drafts():
+    """列出所有可下载的修复文件"""
+    try:
+        fixed_drafts_dir = './fixed_drafts'
+        if not os.path.exists(fixed_drafts_dir):
+            return jsonify({
+                "success": True,
+                "files": []
+            })
+        
+        files = []
+        for filename in os.listdir(fixed_drafts_dir):
+            if filename.endswith('.zip'):
+                file_path = os.path.join(fixed_drafts_dir, filename)
+                file_size = os.path.getsize(file_path)
+                files.append({
+                    "filename": filename,
+                    "size": file_size,
+                    "download_url": f"/download_fixed_draft/{filename}"
+                })
+        
+        return jsonify({
+            "success": True,
+            "files": files
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"获取文件列表失败: {str(e)}"
+        }), 500
  
 @app.route('/add_video', methods=['POST'])
 def add_video():
